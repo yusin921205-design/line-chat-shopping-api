@@ -23,6 +23,7 @@ export function cartMessage(cart, { canCheckout = false, shipping } = {}) {
     button('清空購物車', 'action=clear', 'secondary')
   ];
   if (canCheckout) summaryButtons.push(button('送出訂單', 'action=checkout', 'primary'));
+  else if (shipping) summaryButtons.push(button('下一步：銀行轉帳', 'action=payment&type=transfer', 'primary'));
   items.push({ type: 'bubble', body: { type: 'box', layout: 'vertical', spacing: 'md', contents: [
     { type: 'text', text: '選擇物流方式', weight: 'bold', size: 'lg' },
     { type: 'text', text: shipping ? `目前：${shippingOption.label}（運費 ${formatMoney(shippingOption.fee)}）` : '請直接點選下方物流方式', wrap: true, color: '#666666' },

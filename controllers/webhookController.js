@@ -124,7 +124,11 @@ async function processAction(userId, { action, id, type }) {
     case 'delete': await removeItem(userId, id); return cartMessage(await getCart(userId));
     case 'clear': await clearCart(userId); clearCheckout(userId); return { type: 'text', text: '已清空購物車。' };
     case 'shipping-menu': return shippingMessage();
-    case 'shipping': setShipping(userId, type); return paymentMessage();
+    case 'shipping': {
+      setShipping(userId, type);
+      const checkout = getCheckout(userId);
+      return cartMessage(await getCart(userId), { shipping: checkout.shipping });
+    }
     case 'payment': setPayment(userId, type); beginCustomerDetails(userId); return { type: 'text', text: customerDetailsPrompt };
     case 'checkout': {
       const choices = getCheckout(userId);
