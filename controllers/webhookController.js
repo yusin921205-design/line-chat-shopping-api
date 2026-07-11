@@ -4,7 +4,7 @@ import { addItem, changeQuantity, clearCart, getCart, removeItem } from '../serv
 import { getProduct, listProducts } from '../services/productService.js';
 import { createOrder } from '../services/orderService.js';
 import { getCustomerOrders } from '../services/orderQueryService.js';
-import { beginCustomerDetails, clearCheckout, clearPendingTransferScreenshot, getCheckout, retryDelivery, setCustomerName, setCustomerPhone, setDeliveryCandidate, setDeliveryDetail, setPayment, setPendingTransferScreenshot, setShipping } from '../services/sessionService.js';
+import { beginCustomerDetails, clearCheckout, clearPendingTransferScreenshot, getCheckout, retryDelivery, setCustomerDetails, setDeliveryCandidate, setDeliveryDetail, setPayment, setPendingTransferScreenshot, setShipping } from '../services/sessionService.js';
 import { attachTransferScreenshot, submitTransferReport } from '../services/paymentReportService.js';
 import { saveTransferScreenshot } from '../services/transferScreenshotService.js';
 import { cartMessage, editMessage, paymentMessage, productList, shippingMessage } from '../flex/messages.js';
@@ -23,6 +23,14 @@ const orderStatusLabels = {
   '已付款': ['已付款', '備貨中'],
   '已出貨': ['已付款', '已出貨']
 };
+
+const customerDetailsPrompt = '請一次輸入收件資料：\n1. 姓名：王小美\n2. 電話：0912345678';
+
+function parseCustomerDetails(input) {
+  const name = input.match(/(?:姓名|名字|收件人)\s*[：:]\s*([^\n\r]+)/)?.[1]?.trim();
+  const phone = input.match(/(?:電話|手機)\s*[：:]\s*(09\d{8})/)?.[1];
+  return { name, phone };
+}
 
 function formatDate(value, empty = '尚未出貨') {
   if (!value) return empty;
@@ -62,14 +70,10 @@ async function handleEvent(event) {
         return reply(event, { type: 'text', text: '已收到您的匯款末五碼資料。請再上傳一張匯款截圖，完成後我們會盡快核對款項。' });
       }
       const checkout = getCheckout(userId);
-      if (checkout.step === 'name') {
-        setCustomerName(userId, event.message.text.trim());
-        return reply(event, { type: 'text', text: '請輸入收件人手機號碼（例如：0912345678）。' });
-      }
-      if (checkout.step === 'phone') {
-        const phone = event.message.text.replace(/\D/g, '');
-        if (!/^09\d{8}$/.test(phone)) return reply(event, { type: 'text', text: '手機號碼格式不正確，請輸入 10 碼手機號碼，例如：0912345678。' });
-        setCustomerPhone(userId, phone);
+      if (checkout.step === 'customerDetails') {
+        const { name, phone } = parseCustomerDetails(event.message.text);
+        if (!name || !/^09\d{8}$/.test(phone || '')) return reply(event, { type: 'text', text: `資料格式不正確。\n\n${customerDetailsPrompt}` });
+        setCustomerDetails(userId, name, phone);
         return reply(event, { type: 'text', text: deliveryPrompts[checkout.shipping] || '請輸入收件資訊。' });
       }
       if (checkout.step === 'delivery') {
@@ -121,13 +125,12 @@ async function processAction(userId, { action, id, type }) {
     case 'clear': await clearCart(userId); clearCheckout(userId); return { type: 'text', text: '已清空購物車。' };
     case 'shipping-menu': return shippingMessage();
     case 'shipping': setShipping(userId, type); return paymentMessage();
-    case 'payment': setPayment(userId, type); beginCustomerDetails(userId); return { type: 'text', text: '請輸入收件人姓名。' };
+    case 'payment': setPayment(userId, type); beginCustomerDetails(userId); return { type: 'text', text: customerDetailsPrompt };
     case 'checkout': {
       const choices = getCheckout(userId);
       if (!choices.shipping) return shippingMessage();
       if (!choices.payment) return paymentMessage();
-      if (!choices.name) return { type: 'text', text: '請輸入收件人姓名。' };
-      if (!choices.phone) return { type: 'text', text: '請輸入收件人手機號碼。' };
+      if (!choices.name || !choices.phone) return { type: 'text', text: customerDetailsPrompt };
       if (!choices.deliveryDetail) return { type: 'text', text: deliveryPrompts[choices.shipping] || '請輸入收件資訊。' };
       const order = await createOrder(userId);
       const transferInstructions = (process.env.BANK_TRANSFER_INSTRUCTIONS || '請聯絡我們取得銀行轉帳資訊。').replaceAll('\\n', '\n');
