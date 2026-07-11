@@ -1,11 +1,11 @@
 import { getSheets, spreadsheetId } from './googleSheetClient.js';
 
 const HEADERS = {
-  Products: ['ProductId', 'Name', 'Price', 'Image', 'Description', 'Stock', 'Category'],
-  Cart: ['UserId', 'ProductId', 'Quantity'],
-  Orders: ['OrderNo', 'UserId', 'Products(JSON)', 'Total', 'Shipping', 'Payment', 'Status', 'CreatedAt', 'ShippedAt'],
-  PaymentReports: ['OrderNo', 'UserId', 'TransferLast5', 'Status', 'ReportedAt'],
-  CustomerDetails: ['OrderNo', 'UserId', 'Name', 'Phone', 'DeliveryDetail', 'CreatedAt']
+  Products: ['ProductId｜商品編號', 'Name｜商品名稱', 'Price｜售價', 'Image｜圖片網址', 'Description｜商品說明', 'Stock｜庫存數量', 'Category｜商品分類'],
+  Cart: ['UserId｜LINE使用者ID', 'ProductId｜商品編號', 'Quantity｜商品數量'],
+  Orders: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'Products(JSON)｜商品明細JSON', 'Total｜訂單總額', 'Shipping｜取貨方式', 'Payment｜付款方式', 'Status｜訂單狀態', 'CreatedAt｜訂購日期時間', 'ShippedAt｜出貨日期', 'ProductSummary｜訂購商品與數量', 'CustomerName｜客戶姓名', 'CustomerPhone｜客戶電話', 'DeliveryDetail｜取貨門市或收件資訊', 'TransferLast5｜匯款末五碼'],
+  PaymentReports: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'TransferLast5｜匯款末五碼', 'Status｜核帳狀態', 'ReportedAt｜回報日期時間'],
+  CustomerDetails: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'Name｜客戶姓名', 'Phone｜客戶電話', 'DeliveryDetail｜取貨門市或收件資訊', 'CreatedAt｜建立日期時間']
 };
 
 export async function ensureSheets() {
@@ -27,7 +27,7 @@ export async function readRows(sheetName) {
   const { data } = await getSheets().spreadsheets.values.get({ spreadsheetId: spreadsheetId(), range: `${sheetName}!A:Z` });
   const [headers = [], ...rows] = data.values || [];
   return rows.filter((row) => row.some((value) => value !== '')).map((row, index) => ({
-    ...Object.fromEntries(headers.map((key, col) => [key, row[col] ?? ''])),
+    ...Object.fromEntries(headers.map((key, col) => [String(key).split('｜')[0].trim(), row[col] ?? ''])),
     _row: index + 2
   }));
 }
