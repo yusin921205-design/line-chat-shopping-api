@@ -131,7 +131,7 @@ async function processAction(userId, { action, id, type }) {
       if (!choices.deliveryDetail) return { type: 'text', text: deliveryPrompts[choices.shipping] || '請輸入收件資訊。' };
       const order = await createOrder(userId);
       const transferInstructions = (process.env.BANK_TRANSFER_INSTRUCTIONS || '請聯絡我們取得銀行轉帳資訊。').replaceAll('\\n', '\n');
-      return { type: 'text', text: `訂單已建立！\n訂單編號：${order.orderNo}\n訂單金額：NT$${order.total.toLocaleString('zh-TW')}\n物流：${shippingLabels[choices.shipping] || choices.shipping}\n付款：${paymentLabels[choices.payment] || choices.payment}\n付款狀態：待付款\n\n${transferInstructions}\n\n轉帳後請回覆：\n匯款 ${order.orderNo} 12345\n（將 12345 改為您的帳戶末五碼）` };
+      return { type: 'text', text: `訂單已建立！\n訂單編號：${order.orderNo}\n訂單金額：NT$${order.total.toLocaleString('zh-TW')}\n物流：${shippingLabels[choices.shipping] || choices.shipping}\n付款：${paymentLabels[choices.payment] || choices.payment}\n付款狀態：待付款\n\n${transferInstructions}\n\n轉帳後請回覆：\n匯款 ${order.orderNo} 12345\n（將 12345 改為您的帳戶末五碼）\n\n匯款完成後，請截圖回傳。` };
     }
     default: throw new Error('未知操作');
   }
