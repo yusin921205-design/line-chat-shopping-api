@@ -3,6 +3,7 @@ import { ensureSheets } from '../sheet/sheetService.js';
 import { addItem, changeQuantity, clearCart, getCart, removeItem } from '../services/cartService.js';
 import { getProduct, listProducts } from '../services/productService.js';
 import { createOrder } from '../services/orderService.js';
+import { getCustomerOrders } from '../services/orderQueryService.js';
 import { beginCustomerDetails, clearCheckout, getCheckout, setCustomerName, setCustomerPhone, setDeliveryDetail, setPayment, setShipping } from '../services/sessionService.js';
 import { submitTransferReport } from '../services/paymentReportService.js';
 import { cartMessage, editMessage, paymentMessage, productList, shippingMessage } from '../flex/messages.js';
@@ -15,6 +16,23 @@ const deliveryPrompts = {
   post_office: '請輸入郵局寄送地址（含郵遞區號）。',
   meetup: '請輸入面交地點與方便約定的時間。'
 };
+const orderStatusLabels = {
+  Pending: ['待付款', '尚未出貨'],
+  '待核帳': ['核對款項中', '尚未出貨'],
+  '已付款': ['已付款', '備貨中'],
+  '已出貨': ['已付款', '已出貨']
+};
+
+function formatDate(value, empty = '尚未出貨') {
+  if (!value) return empty;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
+}
+
+function orderSummary(order) {
+  const [paymentStatus, shippingStatus] = orderStatusLabels[order.Status] || [order.Status || '處理中', '處理中'];
+  return `訂單編號：${order.OrderNo}\n訂購日期：${formatDate(order.CreatedAt, '—')}\n付款狀態：${paymentStatus}\n出貨狀態：${shippingStatus}\n出貨日期：${formatDate(order.ShippedAt)}\n金額：NT$${Number(order.Total || 0).toLocaleString('zh-TW')}`;
+}
 
 export async function handleWebhook(req, res, next) {
   res.sendStatus(200); // Acknowledge LINE promptly; replies run independently.
@@ -47,6 +65,11 @@ async function handleEvent(event) {
       if (checkout.step === 'delivery') {
         setDeliveryDetail(userId, event.message.text.trim());
         return reply(event, cartMessage(await getCart(userId), { canCheckout: true }));
+      }
+      if (['訂單查詢', '查詢訂單', 'orders'].includes(text)) {
+        const orders = await getCustomerOrders(userId);
+        if (!orders.length) return reply(event, { type: 'text', text: '目前找不到您的訂單。' });
+        return reply(event, { type: 'text', text: `您的最近訂單：\n\n${orders.slice(0, 5).map(orderSummary).join('\n\n')}` });
       }
       if (['商品', '商品分類', 'products', '我要下單'].includes(text)) return reply(event, productList(await listProducts()));
       if (['購物車', 'cart'].includes(text)) {

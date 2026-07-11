@@ -3,7 +3,7 @@ import { getSheets, spreadsheetId } from './googleSheetClient.js';
 const HEADERS = {
   Products: ['ProductId', 'Name', 'Price', 'Image', 'Description', 'Stock', 'Category'],
   Cart: ['UserId', 'ProductId', 'Quantity'],
-  Orders: ['OrderNo', 'UserId', 'Products(JSON)', 'Total', 'Shipping', 'Payment', 'Status', 'CreatedAt'],
+  Orders: ['OrderNo', 'UserId', 'Products(JSON)', 'Total', 'Shipping', 'Payment', 'Status', 'CreatedAt', 'ShippedAt'],
   PaymentReports: ['OrderNo', 'UserId', 'TransferLast5', 'Status', 'ReportedAt'],
   CustomerDetails: ['OrderNo', 'UserId', 'Name', 'Phone', 'DeliveryDetail', 'CreatedAt']
 };
@@ -14,7 +14,13 @@ export async function ensureSheets() {
   const existing = new Set((data.sheets || []).map((s) => s.properties.title));
   const missing = Object.keys(HEADERS).filter((name) => !existing.has(name));
   if (missing.length) await api.spreadsheets.batchUpdate({ spreadsheetId: id, requestBody: { requests: missing.map((title) => ({ addSheet: { properties: { title } } })) } });
-  for (const title of missing) await api.spreadsheets.values.update({ spreadsheetId: id, range: `${title}!A1`, valueInputOption: 'RAW', requestBody: { values: [HEADERS[title]] } });
+  for (const [title, headers] of Object.entries(HEADERS)) {
+    const { data } = await api.spreadsheets.values.get({ spreadsheetId: id, range: `${title}!A1:Z1` });
+    const currentHeaders = data.values?.[0] || [];
+    if (currentHeaders.length !== headers.length || currentHeaders.some((value, index) => value !== headers[index])) {
+      await api.spreadsheets.values.update({ spreadsheetId: id, range: `${title}!A1`, valueInputOption: 'RAW', requestBody: { values: [headers] } });
+    }
+  }
 }
 
 export async function readRows(sheetName) {
