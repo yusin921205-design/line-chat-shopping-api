@@ -24,9 +24,10 @@ export function cartMessage(cart, { canCheckout = false, shipping } = {}) {
   ];
   if (canCheckout) summaryButtons.push(button('送出訂單', 'action=checkout', 'primary'));
   items.push({ type: 'bubble', body: { type: 'box', layout: 'vertical', spacing: 'md', contents: [
-    { type: 'text', text: '物流方式', weight: 'bold', size: 'lg' },
-    { type: 'text', text: shipping ? `${shippingOption.label}　運費 ${formatMoney(shippingOption.fee)}` : '尚未選擇物流方式', wrap: true, color: '#666666' }
-  ] }, footer: { type: 'box', layout: 'vertical', contents: [button(shipping ? '修改物流方式' : '選擇物流方式', 'action=shipping-menu')] } });
+    { type: 'text', text: '選擇物流方式', weight: 'bold', size: 'lg' },
+    { type: 'text', text: shipping ? `目前：${shippingOption.label}（運費 ${formatMoney(shippingOption.fee)}）` : '請直接點選下方物流方式', wrap: true, color: '#666666' },
+    ...Object.entries(SHIPPING_OPTIONS).map(([value, option]) => button(`${option.label.replace('超商取貨', '取貨')} $${option.fee}`, `action=shipping&type=${value}`, shipping === value ? 'primary' : undefined))
+  ] } });
   const calculation = cart.items.map((item) => ({ type: 'text', size: 'sm', wrap: true, text: `${formatMoney(item.price)} × ${item.quantity}${item.freeQuantity ? `（買3送1贈${item.freeQuantity}）` : ''} = ${formatMoney(item.subtotal)}` }));
   items.push({ type: 'bubble', body: { type: 'box', layout: 'vertical', spacing: 'md', contents: [
     { type: 'text', text: '購物車合計', weight: 'bold', size: 'lg' },

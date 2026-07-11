@@ -1,5 +1,5 @@
 export const SHIPPING_OPTIONS = {
-  seven: { label: '7-ELEVEN 超商取貨', fee: 60 },
+  seven: { label: '7-11 超商取貨', fee: 60 },
   family: { label: '全家超商取貨', fee: 60 },
   post_office: { label: '郵局寄送', fee: 80 },
   meetup: { label: '面交', fee: 0 }
