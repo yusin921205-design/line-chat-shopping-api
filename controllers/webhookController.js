@@ -17,7 +17,7 @@ async function handleEvent(event) {
     await ensureSheets();
     if (event.type === 'message' && event.message.type === 'text') {
       const text = event.message.text.trim().toLowerCase();
-      if (['商品', '商品分類', 'products'].includes(text)) return reply(event, productList(await listProducts()));
+      if (['商品', '商品分類', 'products', '我要下單'].includes(text)) return reply(event, productList(await listProducts()));
       if (['購物車', 'cart'].includes(text)) return reply(event, cartMessage(await getCart(userId)));
       return reply(event, { type: 'text', text: '請使用下方圖文選單選購商品，或輸入「商品」／「購物車」。' });
     }
