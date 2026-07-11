@@ -4,8 +4,9 @@ import { addItem, changeQuantity, clearCart, getCart, removeItem } from '../serv
 import { getProduct, listProducts } from '../services/productService.js';
 import { createOrder } from '../services/orderService.js';
 import { getCustomerOrders } from '../services/orderQueryService.js';
-import { beginCustomerDetails, clearCheckout, clearPendingTransferScreenshot, getCheckout, setCustomerName, setCustomerPhone, setDeliveryDetail, setPayment, setPendingTransferScreenshot, setShipping } from '../services/sessionService.js';
+import { beginCustomerDetails, clearCheckout, clearPendingTransferScreenshot, getCheckout, retryDelivery, setCustomerName, setCustomerPhone, setDeliveryCandidate, setDeliveryDetail, setPayment, setPendingTransferScreenshot, setShipping } from '../services/sessionService.js';
 import { attachTransferScreenshot, submitTransferReport } from '../services/paymentReportService.js';
+import { findStores } from '../services/storeService.js';
 import { saveTransferScreenshot } from '../services/transferScreenshotService.js';
 import { cartMessage, editMessage, paymentMessage, productList, shippingMessage } from '../flex/messages.js';
 
@@ -17,6 +18,7 @@ const deliveryPrompts = {
   post_office: '請輸入郵局寄送地址（含郵遞區號）。',
   meetup: '請輸入面交地點與方便約定的時間。'
 };
+const storeShipping = new Set(['seven', 'family']);
 const orderStatusLabels = {
   Pending: ['待付款', '尚未出貨'],
   '待核帳': ['核對款項中', '尚未出貨'],
@@ -73,8 +75,28 @@ async function handleEvent(event) {
         return reply(event, { type: 'text', text: deliveryPrompts[checkout.shipping] || '請輸入收件資訊。' });
       }
       if (checkout.step === 'delivery') {
-        setDeliveryDetail(userId, event.message.text.trim());
-        return reply(event, cartMessage(await getCart(userId), { canCheckout: true }));
+        const input = event.message.text.trim();
+        if (storeShipping.has(checkout.shipping)) {
+          const matches = await findStores(checkout.shipping, input);
+          if (matches.exact.length === 1) {
+            const store = matches.exact[0];
+            const detail = `${store.Brand} ${store.StoreName}｜${store.Address}`;
+            setDeliveryCandidate(userId, detail);
+            return reply(event, { type: 'text', text: `請確認取貨門市：\n${detail}\n\n正確請回覆「確認」；若有誤請回覆其他門市名稱。` });
+          }
+          const suggestions = matches.suggestions.map((store) => `${store.StoreName}｜${store.Address}`).join('\n');
+          return reply(event, { type: 'text', text: suggestions ? `找不到完全相符的門市，請確認名稱或改用以下候選：\n${suggestions}` : '找不到這間門市，請確認門市名稱後再輸入。' });
+        }
+        setDeliveryCandidate(userId, input);
+        return reply(event, { type: 'text', text: `請確認收件資訊：\n${input}\n\n正確請回覆「確認」；若有誤請重新輸入。` });
+      }
+      if (checkout.step === 'deliveryConfirm') {
+        if (['確認', 'confirm', '正確'].includes(text)) {
+          setDeliveryDetail(userId, checkout.deliveryDetail);
+          return reply(event, cartMessage(await getCart(userId), { canCheckout: true }));
+        }
+        retryDelivery(userId);
+        return reply(event, { type: 'text', text: `${deliveryPrompts[checkout.shipping] || '請重新輸入收件資訊。'}\n請重新輸入。` });
       }
       if (['訂單查詢', '查詢訂單', 'orders'].includes(text)) {
         const orders = await getCustomerOrders(userId);

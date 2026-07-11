@@ -8,7 +8,8 @@
     "start": "node app.js",
     "sheets:setup": "node scripts/setup-sheets.js",
     "richmenu:create": "node scripts/create-rich-menu.js",
-    "check": "node --check app.js && node --check controllers/webhookController.js"
+    "check": "node --check app.js && node --check controllers/webhookController.js",
+    "stores:import": "node scripts/import-convenience-stores.js"
   },
   "dependencies": {
     "@line/bot-sdk": "^9.7.0",
