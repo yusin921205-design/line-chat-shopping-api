@@ -6,19 +6,17 @@ import { createOrder } from '../services/orderService.js';
 import { getCustomerOrders } from '../services/orderQueryService.js';
 import { beginCustomerDetails, clearCheckout, clearPendingTransferScreenshot, getCheckout, retryDelivery, setCustomerName, setCustomerPhone, setDeliveryCandidate, setDeliveryDetail, setPayment, setPendingTransferScreenshot, setShipping } from '../services/sessionService.js';
 import { attachTransferScreenshot, submitTransferReport } from '../services/paymentReportService.js';
-import { findStores } from '../services/storeService.js';
 import { saveTransferScreenshot } from '../services/transferScreenshotService.js';
 import { cartMessage, editMessage, paymentMessage, productList, shippingMessage } from '../flex/messages.js';
 
 const shippingLabels = { seven: '7-ELEVEN 超商取貨（免運）', family: '全家超商取貨（免運）', post_office: '郵局寄送（免運）', meetup: '面交（免運）' };
 const paymentLabels = { transfer: '銀行轉帳' };
 const deliveryPrompts = {
-  seven: '請輸入 7-ELEVEN 取貨門市名稱。',
-  family: '請輸入全家取貨門市名稱。',
+  seven: '請輸入 7-ELEVEN 取貨門市名稱與縣市。',
+  family: '請輸入全家取貨門市名稱與縣市。',
   post_office: '請輸入郵局寄送地址（含郵遞區號）。',
   meetup: '請輸入面交地點與方便約定的時間。'
 };
-const storeShipping = new Set(['seven', 'family']);
 const orderStatusLabels = {
   Pending: ['待付款', '尚未出貨'],
   '待核帳': ['核對款項中', '尚未出貨'],
@@ -76,19 +74,9 @@ async function handleEvent(event) {
       }
       if (checkout.step === 'delivery') {
         const input = event.message.text.trim();
-        if (storeShipping.has(checkout.shipping)) {
-          const matches = await findStores(checkout.shipping, input);
-          if (matches.exact.length === 1) {
-            const store = matches.exact[0];
-            const detail = `${store.Brand} ${store.StoreName}｜${store.Address}`;
-            setDeliveryCandidate(userId, detail);
-            return reply(event, { type: 'text', text: `請確認取貨門市：\n${detail}\n\n正確請回覆「確認」；若有誤請回覆其他門市名稱。` });
-          }
-          const suggestions = matches.suggestions.map((store) => `${store.StoreName}｜${store.Address}`).join('\n');
-          return reply(event, { type: 'text', text: suggestions ? `找不到完全相符的門市，請確認名稱或改用以下候選：\n${suggestions}` : '找不到這間門市，請確認門市名稱後再輸入。' });
-        }
         setDeliveryCandidate(userId, input);
-        return reply(event, { type: 'text', text: `請確認收件資訊：\n${input}\n\n正確請回覆「確認」；若有誤請重新輸入。` });
+        const title = ['seven', 'family'].includes(checkout.shipping) ? '請確認取貨門市' : '請確認收件資訊';
+        return reply(event, { type: 'text', text: `${title}：\n${input}\n\n正確請回覆「確認」；若有誤請重新輸入。` });
       }
       if (checkout.step === 'deliveryConfirm') {
         if (['確認', 'confirm', '正確'].includes(text)) {

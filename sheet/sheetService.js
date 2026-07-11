@@ -5,8 +5,7 @@ const HEADERS = {
   Cart: ['UserId｜LINE使用者ID', 'ProductId｜商品編號', 'Quantity｜商品數量'],
   Orders: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'Products(JSON)｜商品明細JSON', 'Total｜訂單總額', 'Shipping｜取貨方式', 'Payment｜付款方式', 'Status｜訂單狀態', 'CreatedAt｜訂購日期時間', 'ShippedAt｜出貨日期', 'ProductSummary｜訂購商品與數量', 'CustomerName｜客戶姓名', 'CustomerPhone｜客戶電話', 'DeliveryDetail｜取貨門市或收件資訊', 'TransferLast5｜匯款末五碼'],
   PaymentReports: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'TransferLast5｜匯款末五碼', 'Status｜核帳狀態', 'ReportedAt｜回報日期時間', 'ScreenshotUrl｜匯款截圖連結'],
-  CustomerDetails: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'Name｜客戶姓名', 'Phone｜客戶電話', 'DeliveryDetail｜取貨門市或收件資訊', 'CreatedAt｜建立日期時間'],
-  ConvenienceStores: ['Brand｜品牌', 'StoreName｜門市名稱', 'Address｜門市地址', 'Status｜門市狀態', 'UpdatedAt｜資料更新日期']
+  CustomerDetails: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'Name｜客戶姓名', 'Phone｜客戶電話', 'DeliveryDetail｜取貨門市或收件資訊', 'CreatedAt｜建立日期時間']
 };
 
 export async function ensureSheets() {
