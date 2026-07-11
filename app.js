@@ -8,7 +8,7 @@ const port = process.env.PORT || 3000;
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 // LINE signature must be verified against the untouched request body.
-app.post('/webhook', express.raw({ type: 'application/json' }), verifyLineSignature, webhookRouter);
+app.use('/webhook', express.raw({ type: 'application/json' }), verifyLineSignature, webhookRouter);
 
 app.use((error, _req, res, _next) => {
   console.error(error);
