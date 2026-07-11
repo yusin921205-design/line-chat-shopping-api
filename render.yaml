@@ -17,3 +17,5 @@ services:
         sync: false
       - key: BANK_TRANSFER_INSTRUCTIONS
         sync: false
+      - key: GOOGLE_DRIVE_FOLDER_ID
+        sync: false

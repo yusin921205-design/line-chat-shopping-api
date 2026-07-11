@@ -4,8 +4,9 @@ import { addItem, changeQuantity, clearCart, getCart, removeItem } from '../serv
 import { getProduct, listProducts } from '../services/productService.js';
 import { createOrder } from '../services/orderService.js';
 import { getCustomerOrders } from '../services/orderQueryService.js';
-import { beginCustomerDetails, clearCheckout, getCheckout, setCustomerName, setCustomerPhone, setDeliveryDetail, setPayment, setShipping } from '../services/sessionService.js';
-import { submitTransferReport } from '../services/paymentReportService.js';
+import { beginCustomerDetails, clearCheckout, clearPendingTransferScreenshot, getCheckout, setCustomerName, setCustomerPhone, setDeliveryDetail, setPayment, setPendingTransferScreenshot, setShipping } from '../services/sessionService.js';
+import { attachTransferScreenshot, submitTransferReport } from '../services/paymentReportService.js';
+import { saveTransferScreenshot } from '../services/transferScreenshotService.js';
 import { cartMessage, editMessage, paymentMessage, productList, shippingMessage } from '../flex/messages.js';
 
 const shippingLabels = { seven: '7-ELEVEN 超商取貨（免運）', family: '全家超商取貨（免運）', post_office: '郵局寄送（免運）', meetup: '面交（免運）' };
@@ -43,13 +44,22 @@ async function handleEvent(event) {
   try {
     const userId = event.source.userId;
     await ensureSheets();
+    if (event.type === 'message' && event.message.type === 'image') {
+      const checkout = getCheckout(userId);
+      if (!checkout.transferScreenshotOrderNo) return reply(event, { type: 'text', text: '請先依訂單指示回覆匯款末五碼，再上傳匯款截圖。' });
+      const screenshotUrl = await saveTransferScreenshot(checkout.transferScreenshotOrderNo, event.message.id);
+      await attachTransferScreenshot(userId, checkout.transferScreenshotOrderNo, screenshotUrl);
+      clearPendingTransferScreenshot(userId);
+      return reply(event, { type: 'text', text: '已收到匯款截圖與末五碼資料，我們會盡快核對款項；確認後將於 1–3 天內安排出貨。' });
+    }
     if (event.type === 'message' && event.message.type === 'text') {
       const text = event.message.text.trim().toLowerCase();
       const transferReport = text.match(/^匯款\s+(l\d{8}-[a-z0-9]+)\s+(\d{5})$/i);
       if (transferReport) {
         const [, orderNo, last5] = transferReport;
         await submitTransferReport(userId, orderNo.toUpperCase(), last5);
-        return reply(event, { type: 'text', text: '已收到您的匯款資料，我們會盡快核對款項；確認後將於 1–3 天內安排出貨，出貨後會再通知您。' });
+        setPendingTransferScreenshot(userId, orderNo.toUpperCase());
+        return reply(event, { type: 'text', text: '已收到您的匯款末五碼資料。請再上傳一張匯款截圖，完成後我們會盡快核對款項。' });
       }
       const checkout = getCheckout(userId);
       if (checkout.step === 'name') {

@@ -7,5 +7,7 @@ export function beginCustomerDetails(userId) { sessions.set(userId, { ...get(use
 export function setCustomerName(userId, name) { sessions.set(userId, { ...get(userId), name, step: 'phone' }); }
 export function setCustomerPhone(userId, phone) { sessions.set(userId, { ...get(userId), phone, step: 'delivery' }); }
 export function setDeliveryDetail(userId, deliveryDetail) { sessions.set(userId, { ...get(userId), deliveryDetail, step: undefined }); }
+export function setPendingTransferScreenshot(userId, orderNo) { sessions.set(userId, { ...get(userId), transferScreenshotOrderNo: orderNo }); }
+export function clearPendingTransferScreenshot(userId) { const session = { ...get(userId) }; delete session.transferScreenshotOrderNo; sessions.set(userId, session); }
 export function getCheckout(userId) { return get(userId); }
 export function clearCheckout(userId) { sessions.delete(userId); }

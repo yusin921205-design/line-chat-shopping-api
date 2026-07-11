@@ -11,6 +11,15 @@ export async function submitTransferReport(userId, orderNo, last5) {
     order.Shipping, order.Payment, '待核帳', order.CreatedAt, order.ShippedAt,
     order.ProductSummary, order.CustomerName, order.CustomerPhone, order.DeliveryDetail, last5
   ]);
-  await appendRow('PaymentReports', [orderNo, userId, last5, '待核帳', new Date().toISOString()]);
+  await appendRow('PaymentReports', [orderNo, userId, last5, '待核帳', new Date().toISOString(), '']);
   return order;
+}
+
+export async function attachTransferScreenshot(userId, orderNo, screenshotUrl) {
+  const reports = await readRows('PaymentReports');
+  const report = reports.filter((item) => item.OrderNo === orderNo && item.UserId === userId).at(-1);
+  if (!report) throw new Error('找不到這筆匯款回報資料。');
+  await updateRow('PaymentReports', report._row, [
+    report.OrderNo, report.UserId, report.TransferLast5, report.Status, report.ReportedAt, screenshotUrl
+  ]);
 }

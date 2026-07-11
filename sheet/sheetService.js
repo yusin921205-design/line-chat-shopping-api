@@ -4,7 +4,7 @@ const HEADERS = {
   Products: ['ProductId｜商品編號', 'Name｜商品名稱', 'Price｜售價', 'Image｜圖片網址', 'Description｜商品說明', 'Stock｜庫存數量', 'Category｜商品分類'],
   Cart: ['UserId｜LINE使用者ID', 'ProductId｜商品編號', 'Quantity｜商品數量'],
   Orders: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'Products(JSON)｜商品明細JSON', 'Total｜訂單總額', 'Shipping｜取貨方式', 'Payment｜付款方式', 'Status｜訂單狀態', 'CreatedAt｜訂購日期時間', 'ShippedAt｜出貨日期', 'ProductSummary｜訂購商品與數量', 'CustomerName｜客戶姓名', 'CustomerPhone｜客戶電話', 'DeliveryDetail｜取貨門市或收件資訊', 'TransferLast5｜匯款末五碼'],
-  PaymentReports: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'TransferLast5｜匯款末五碼', 'Status｜核帳狀態', 'ReportedAt｜回報日期時間'],
+  PaymentReports: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'TransferLast5｜匯款末五碼', 'Status｜核帳狀態', 'ReportedAt｜回報日期時間', 'ScreenshotUrl｜匯款截圖連結'],
   CustomerDetails: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'Name｜客戶姓名', 'Phone｜客戶電話', 'DeliveryDetail｜取貨門市或收件資訊', 'CreatedAt｜建立日期時間']
 };
 
