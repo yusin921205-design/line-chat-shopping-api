@@ -7,9 +7,9 @@ import { getCustomerOrders } from '../services/orderQueryService.js';
 import { beginCustomerDetails, clearCheckout, clearPendingTransferScreenshot, getCheckout, retryDelivery, setCustomerDetails, setDeliveryCandidate, setDeliveryDetail, setPayment, setPendingTransferScreenshot, setShipping } from '../services/sessionService.js';
 import { attachTransferScreenshot, submitTransferReport } from '../services/paymentReportService.js';
 import { saveTransferScreenshot } from '../services/transferScreenshotService.js';
+import { getShippingOption } from '../services/pricingService.js';
 import { cartMessage, editMessage, paymentMessage, productList, shippingMessage } from '../flex/messages.js';
 
-const shippingLabels = { seven: '7-ELEVEN 超商取貨（免運）', family: '全家超商取貨（免運）', post_office: '郵局寄送（免運）', meetup: '面交（免運）' };
 const paymentLabels = { transfer: '銀行轉帳' };
 const deliveryPrompts = {
   seven: '請輸入 7-ELEVEN 取貨門市名稱與縣市。',
@@ -85,7 +85,7 @@ async function handleEvent(event) {
       if (checkout.step === 'deliveryConfirm') {
         if (['確認', 'confirm', '正確'].includes(text)) {
           setDeliveryDetail(userId, checkout.deliveryDetail);
-          return reply(event, cartMessage(await getCart(userId), { canCheckout: true }));
+          return reply(event, cartMessage(await getCart(userId), { canCheckout: true, shipping: checkout.shipping }));
         }
         retryDelivery(userId);
         return reply(event, { type: 'text', text: `${deliveryPrompts[checkout.shipping] || '請重新輸入收件資訊。'}\n請重新輸入。` });
@@ -98,7 +98,7 @@ async function handleEvent(event) {
       if (['商品', '商品分類', 'products', '我要下單'].includes(text)) return reply(event, productList(await listProducts()));
       if (['購物車', 'cart'].includes(text)) {
         const checkout = getCheckout(userId);
-        return reply(event, cartMessage(await getCart(userId), { canCheckout: Boolean(checkout.shipping && checkout.payment) }));
+        return reply(event, cartMessage(await getCart(userId), { canCheckout: Boolean(checkout.shipping && checkout.payment), shipping: checkout.shipping }));
       }
       return reply(event, { type: 'text', text: '請使用下方圖文選單選購商品，或輸入「商品」／「購物車」。' });
     }
@@ -116,7 +116,7 @@ async function processAction(userId, { action, id, type }) {
     case 'add': await addItem(userId, id); clearCheckout(userId); return cartMessage(await getCart(userId));
     case 'cart': {
       const checkout = getCheckout(userId);
-      return cartMessage(await getCart(userId), { canCheckout: Boolean(checkout.shipping && checkout.payment) });
+      return cartMessage(await getCart(userId), { canCheckout: Boolean(checkout.shipping && checkout.payment), shipping: checkout.shipping });
     }
     case 'edit': { const item = (await getCart(userId)).items.find((x) => x.id === id); if (!item) throw new Error('購物車中沒有此商品'); return editMessage(item); }
     case 'plus': await changeQuantity(userId, id, 1); return cartMessage(await getCart(userId));
@@ -134,7 +134,8 @@ async function processAction(userId, { action, id, type }) {
       if (!choices.deliveryDetail) return { type: 'text', text: deliveryPrompts[choices.shipping] || '請輸入收件資訊。' };
       const order = await createOrder(userId);
       const transferInstructions = (process.env.BANK_TRANSFER_INSTRUCTIONS || '請聯絡我們取得銀行轉帳資訊。').replaceAll('\\n', '\n');
-      return { type: 'text', text: `訂單已建立！\n訂單編號：${order.orderNo}\n訂單金額：NT$${order.total.toLocaleString('zh-TW')}\n物流：${shippingLabels[choices.shipping] || choices.shipping}\n付款：${paymentLabels[choices.payment] || choices.payment}\n付款狀態：待付款\n\n${transferInstructions}\n\n轉帳後請回覆：\n匯款 ${order.orderNo} 12345\n（將 12345 改為您的帳戶末五碼）\n\n匯款完成後，請截圖回傳。` };
+      const shippingOption = getShippingOption(choices.shipping);
+      return { type: 'text', text: `訂單已建立！\n訂單編號：${order.orderNo}\n商品小計：NT$${order.subtotal.toLocaleString('zh-TW')}\n物流：${shippingOption.label}\n運費：NT$${order.shippingFee.toLocaleString('zh-TW')}\n訂單總額：NT$${order.total.toLocaleString('zh-TW')}\n付款：${paymentLabels[choices.payment] || choices.payment}\n付款狀態：待付款\n\n${transferInstructions}\n\n轉帳後請回覆：\n匯款 ${order.orderNo} 12345\n（將 12345 改為您的帳戶末五碼）\n\n匯款完成後，請截圖回傳。` };
     }
     default: throw new Error('未知操作');
   }

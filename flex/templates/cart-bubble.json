@@ -4,7 +4,7 @@
   "body": { "type": "box", "layout": "vertical", "spacing": "sm", "contents": [
     { "type": "text", "text": "{{name}}", "weight": "bold", "size": "lg", "wrap": true },
     { "type": "text", "text": "單價 {{price}}", "size": "sm", "color": "#666666" },
-    { "type": "text", "text": "數量 {{quantity}}　小計 {{subtotal}}", "size": "sm", "weight": "bold" }
+    { "type": "text", "text": "數量 {{quantityLabel}}　小計 {{subtotal}}", "size": "sm", "weight": "bold", "wrap": true }
   ] },
   "footer": { "type": "box", "layout": "vertical", "contents": [{ "type": "button", "action": { "type": "postback", "label": "修改數量", "data": "action=edit&id={{id}}" } }] }
 }

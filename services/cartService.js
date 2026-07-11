@@ -1,14 +1,21 @@
 import { appendRow, deleteRow, readRows, updateRow } from '../sheet/sheetService.js';
 import { getProduct } from './productService.js';
+import { freeQuantity } from './pricingService.js';
 
 export async function getCart(userId) {
   const rows = (await readRows('Cart')).filter((row) => row.UserId === userId);
   const items = await Promise.all(rows.map(async (row) => {
-    try { const product = await getProduct(row.ProductId); return { ...product, quantity: Number(row.Quantity), subtotal: product.price * Number(row.Quantity), row: row._row }; }
+    try {
+      const product = await getProduct(row.ProductId);
+      const quantity = Number(row.Quantity);
+      const free = freeQuantity(product, quantity);
+      return { ...product, quantity, freeQuantity: free, fulfilledQuantity: quantity + free, subtotal: product.price * quantity, row: row._row };
+    }
     catch { return null; }
   }));
   const valid = items.filter(Boolean);
-  return { items: valid, total: valid.reduce((sum, item) => sum + item.subtotal, 0) };
+  const subtotal = valid.reduce((sum, item) => sum + item.subtotal, 0);
+  return { items: valid, subtotal, total: subtotal };
 }
 
 async function findRow(userId, productId) { return (await readRows('Cart')).find((row) => row.UserId === userId && row.ProductId === productId); }
