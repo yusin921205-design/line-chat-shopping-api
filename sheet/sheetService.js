@@ -3,7 +3,9 @@ import { getSheets, spreadsheetId } from './googleSheetClient.js';
 const HEADERS = {
   Products: ['ProductId', 'Name', 'Price', 'Image', 'Description', 'Stock', 'Category'],
   Cart: ['UserId', 'ProductId', 'Quantity'],
-  Orders: ['OrderNo', 'UserId', 'Products(JSON)', 'Total', 'Shipping', 'Payment', 'Status', 'CreatedAt']
+  Orders: ['OrderNo', 'UserId', 'Products(JSON)', 'Total', 'Shipping', 'Payment', 'Status', 'CreatedAt'],
+  PaymentReports: ['OrderNo', 'UserId', 'TransferLast5', 'Status', 'ReportedAt'],
+  CustomerDetails: ['OrderNo', 'UserId', 'Name', 'Phone', 'DeliveryDetail', 'CreatedAt']
 };
 
 export async function ensureSheets() {
