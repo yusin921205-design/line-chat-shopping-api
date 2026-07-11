@@ -1,0 +1,10 @@
+{
+  "size": { "width": 2500, "height": 843 },
+  "selected": true,
+  "name": "LINE 商城主選單",
+  "chatBarText": "開啟商城選單",
+  "areas": [
+    { "bounds": { "x": 0, "y": 0, "width": 1250, "height": 843 }, "action": { "type": "postback", "data": "action=category", "displayText": "查看商品分類" } },
+    { "bounds": { "x": 1250, "y": 0, "width": 1250, "height": 843 }, "action": { "type": "postback", "data": "action=cart", "displayText": "查看購物車" } }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "line-chat-shopping-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch app.js",
+    "start": "node app.js",
+    "sheets:setup": "node scripts/setup-sheets.js",
+    "richmenu:create": "node scripts/create-rich-menu.js",
+    "check": "node --check app.js && node --check controllers/webhookController.js"
+  },
+  "dependencies": {
+    "@line/bot-sdk": "^9.7.0",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "googleapis": "^144.0.0"
+  }
+}

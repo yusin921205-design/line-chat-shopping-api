@@ -1,0 +1,15 @@
+import crypto from 'node:crypto';
+import { appendRow } from '../sheet/sheetService.js';
+import { clearCart, getCart } from './cartService.js';
+import { clearCheckout, getCheckout } from './sessionService.js';
+
+export async function createOrder(userId) {
+  const cart = await getCart(userId); const { shipping, payment } = getCheckout(userId);
+  if (!cart.items.length) throw new Error('購物車是空的');
+  if (!shipping || !payment) throw new Error('請先選擇物流與付款方式');
+  const orderNo = `L${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+  const products = cart.items.map(({ id, name, price, quantity, subtotal }) => ({ productId: id, name, price, quantity, subtotal }));
+  await appendRow('Orders', [orderNo, userId, JSON.stringify(products), cart.total, shipping, payment, 'Pending', new Date().toISOString()]);
+  await clearCart(userId); clearCheckout(userId);
+  return { orderNo, total: cart.total };
+}

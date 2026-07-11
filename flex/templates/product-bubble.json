@@ -1,0 +1,10 @@
+{
+  "type": "bubble",
+  "hero": { "type": "image", "url": "{{image}}", "size": "full", "aspectRatio": "20:13", "aspectMode": "cover" },
+  "body": { "type": "box", "layout": "vertical", "spacing": "sm", "contents": [
+    { "type": "text", "text": "{{name}}", "weight": "bold", "size": "lg", "wrap": true },
+    { "type": "text", "text": "{{price}}", "weight": "bold", "color": "#D55B32", "size": "md" },
+    { "type": "text", "text": "{{description}}", "size": "sm", "color": "#666666", "wrap": true, "maxLines": 3 }
+  ] },
+  "footer": { "type": "box", "layout": "vertical", "contents": [{ "type": "button", "style": "primary", "color": "#3F7D6B", "action": { "type": "postback", "label": "加入購物車", "data": "action=add&id={{id}}", "displayText": "加入 {{name}} 到購物車" } }] }
+}

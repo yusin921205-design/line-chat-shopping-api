@@ -1,0 +1,15 @@
+{
+  "type": "bubble",
+  "body": { "type": "box", "layout": "vertical", "spacing": "md", "contents": [
+    { "type": "text", "text": "{{name}}", "weight": "bold", "size": "xl", "wrap": true },
+    { "type": "text", "text": "目前數量：{{quantity}}", "size": "lg" },
+    { "type": "box", "layout": "horizontal", "spacing": "sm", "contents": [
+      { "type": "button", "style": "primary", "height": "sm", "action": { "type": "postback", "label": "＋", "data": "action=plus&id={{id}}" } },
+      { "type": "button", "height": "sm", "action": { "type": "postback", "label": "－", "data": "action=minus&id={{id}}" } }
+    ] }
+  ] },
+  "footer": { "type": "box", "layout": "vertical", "spacing": "sm", "contents": [
+    { "type": "button", "style": "secondary", "action": { "type": "postback", "label": "刪除商品", "data": "action=delete&id={{id}}" } },
+    { "type": "button", "action": { "type": "postback", "label": "返回購物車", "data": "action=cart" } }
+  ] }
+}
