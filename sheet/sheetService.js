@@ -8,7 +8,26 @@ const HEADERS = {
   CustomerDetails: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'Name｜客戶姓名', 'Phone｜客戶電話', 'DeliveryDetail｜取貨門市或收件資訊', 'CreatedAt｜建立日期時間']
 };
 
+// Sheet structure does not change for every LINE message.  Avoid spending six
+// Google Sheets reads on each webhook event (and hitting the per-minute quota).
+const ENSURE_INTERVAL_MS = 15 * 60 * 1000;
+let lastEnsuredAt = 0;
+let ensureInFlight;
+let productsCache;
+
 export async function ensureSheets() {
+  if (Date.now() - lastEnsuredAt < ENSURE_INTERVAL_MS) return;
+  if (ensureInFlight) return ensureInFlight;
+  ensureInFlight = ensureSheetsNow();
+  try {
+    await ensureInFlight;
+    lastEnsuredAt = Date.now();
+  } finally {
+    ensureInFlight = undefined;
+  }
+}
+
+async function ensureSheetsNow() {
   const api = getSheets(); const id = spreadsheetId();
   const { data } = await api.spreadsheets.get({ spreadsheetId: id });
   const existing = new Set((data.sheets || []).map((s) => s.properties.title));
@@ -24,12 +43,17 @@ export async function ensureSheets() {
 }
 
 export async function readRows(sheetName) {
+  // Products are read repeatedly while building a cart, but are only edited
+  // manually by the shop owner. Keep a short cache to reduce quota usage.
+  if (sheetName === 'Products' && productsCache && Date.now() - productsCache.at < 5 * 60 * 1000) return productsCache.rows;
   const { data } = await getSheets().spreadsheets.values.get({ spreadsheetId: spreadsheetId(), range: `${sheetName}!A:Z` });
   const [headers = [], ...rows] = data.values || [];
-  return rows.filter((row) => row.some((value) => value !== '')).map((row, index) => ({
+  const result = rows.filter((row) => row.some((value) => value !== '')).map((row, index) => ({
     ...Object.fromEntries(headers.map((key, col) => [String(key).split('｜')[0].trim(), row[col] ?? ''])),
     _row: index + 2
   }));
+  if (sheetName === 'Products') productsCache = { at: Date.now(), rows: result };
+  return result;
 }
 
 export async function appendRow(sheetName, values) {
