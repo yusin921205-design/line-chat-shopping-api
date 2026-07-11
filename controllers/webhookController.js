@@ -24,11 +24,16 @@ const orderStatusLabels = {
   '已出貨': ['已付款', '已出貨']
 };
 
-const customerDetailsPrompt = '請一次輸入收件資料：\n1. 姓名：王小美\n2. 電話：0912345678';
+const customerDetailsPrompt = '請一次輸入收件人姓名與手機號碼。\n例如：王小美 0912345678\n（也可輸入：1.王小美 2.0912345678）';
 
 function parseCustomerDetails(input) {
-  const name = input.match(/(?:姓名|名字|收件人)\s*[：:]\s*([^\n\r]+)/)?.[1]?.trim();
-  const phone = input.match(/(?:電話|手機)\s*[：:]\s*(09\d{8})/)?.[1];
+  const phone = input.match(/09\d{8}/)?.[0];
+  const name = phone ? input
+    .replace(phone, ' ')
+    .replace(/(?:姓名|名字|收件人|電話|手機)\s*[：:]?/g, ' ')
+    .replace(/(?:^|\s)[12][.、:：]\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim() : '';
   return { name, phone };
 }
 
