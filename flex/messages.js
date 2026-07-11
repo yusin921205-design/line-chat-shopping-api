@@ -18,8 +18,8 @@ export function cartMessage(cart) {
   return flex('最新購物車', { type: 'carousel', contents: items });
 }
 export function editMessage(item) { return flex('修改購物車商品', template('edit-bubble', { ...item, price: formatMoney(item.price) })); }
-export function shippingMessage() { return choiceMessage('選擇物流方式', [['7-11', '711'], ['全家', 'family'], ['宅配', 'home'], ['自取', 'pickup']], 'shipping'); }
-export function paymentMessage() { return choiceMessage('選擇付款方式', [['信用卡', 'credit_card'], ['LINE Pay', 'line_pay'], ['ATM', 'atm'], ['匯款', 'transfer'], ['貨到付款', 'cod']], 'payment'); }
+export function shippingMessage() { return choiceMessage('選擇物流方式（全部免運）', [['7-ELEVEN 超商取貨（免運）', 'seven'], ['全家超商取貨（免運）', 'family'], ['郵局寄送（免運）', 'post_office'], ['面交（免運）', 'meetup']], 'shipping'); }
+export function paymentMessage() { return choiceMessage('選擇付款方式', [['LINE Pay', 'line_pay'], ['Apple Pay／信用卡', 'apple_pay'], ['銀行轉帳', 'transfer']], 'payment'); }
 function choiceMessage(title, choices, action) {
   return flex(title, { type: 'bubble', body: { type: 'box', layout: 'vertical', spacing: 'md', contents: [{ type: 'text', text: title, weight: 'bold', size: 'xl' }, ...choices.map(([label, value]) => button(label, `action=${action}&type=${value}`))] } });
 }

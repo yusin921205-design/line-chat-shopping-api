@@ -6,6 +6,9 @@ import { createOrder } from '../services/orderService.js';
 import { getCheckout, setPayment, setShipping } from '../services/sessionService.js';
 import { cartMessage, editMessage, paymentMessage, productList, shippingMessage } from '../flex/messages.js';
 
+const shippingLabels = { seven: '7-ELEVEN 超商取貨（免運）', family: '全家超商取貨（免運）', post_office: '郵局寄送（免運）', meetup: '面交（免運）' };
+const paymentLabels = { line_pay: 'LINE Pay', apple_pay: 'Apple Pay／信用卡', transfer: '銀行轉帳' };
+
 export async function handleWebhook(req, res, next) {
   res.sendStatus(200); // Acknowledge LINE promptly; replies run independently.
   try { await Promise.all(req.lineEvents.map(handleEvent)); } catch (error) { console.error('Webhook handling failed:', error); }
@@ -47,7 +50,7 @@ async function processAction(userId, { action, id, type }) {
       if (!choices.shipping) return shippingMessage();
       if (!choices.payment) return paymentMessage();
       const order = await createOrder(userId);
-      return { type: 'text', text: `訂單已建立！\n訂單編號：${order.orderNo}\n訂單金額：NT$${order.total.toLocaleString('zh-TW')}\n狀態：Pending` };
+      return { type: 'text', text: `訂單已建立！\n訂單編號：${order.orderNo}\n訂單金額：NT$${order.total.toLocaleString('zh-TW')}\n物流：${shippingLabels[choices.shipping] || choices.shipping}\n付款：${paymentLabels[choices.payment] || choices.payment}\n付款狀態：待付款\n\n我們會依你選擇的方式提供付款與取貨資訊。` };
     }
     default: throw new Error('未知操作');
   }
