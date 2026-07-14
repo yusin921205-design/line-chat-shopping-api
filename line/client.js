@@ -9,6 +9,7 @@ const client = new messagingApi.MessagingApiClient({
 });
 
 export const replyMessage = (replyToken, messages) => client.replyMessage({ replyToken, messages });
+export const getUserProfile = (userId) => client.getProfile(userId);
 export const createRichMenu = (richMenu) => client.createRichMenu(richMenu);
 export const setDefaultRichMenu = (richMenuId) => client.setDefaultRichMenu(richMenuId);
 export const uploadRichMenuImage = (richMenuId, contentType, body) =>

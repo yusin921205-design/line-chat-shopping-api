@@ -3,6 +3,7 @@ import { appendRow } from '../sheet/sheetService.js';
 import { clearCart, getCart } from './cartService.js';
 import { clearCheckout, getCheckout } from './sessionService.js';
 import { getShippingOption } from './pricingService.js';
+import { recordReferralSale } from './referralService.js';
 
 export async function createOrder(userId) {
   const cart = await getCart(userId); const { shipping, payment, name, phone, deliveryDetail } = getCheckout(userId);
@@ -14,8 +15,10 @@ export async function createOrder(userId) {
   const orderNo = `L${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
   const products = cart.items.map(({ id, name, price, quantity, freeQuantity, fulfilledQuantity, subtotal }) => ({ productId: id, name, price, quantity, freeQuantity, fulfilledQuantity, subtotal }));
   const productSummary = cart.items.map((item) => `${item.name} × ${item.quantity}${item.freeQuantity ? `（贈${item.freeQuantity}）` : ''}`).join('、');
-  await appendRow('Orders', [orderNo, userId, JSON.stringify(products), total, shipping, payment, 'Pending', new Date().toISOString(), '', productSummary, name, phone, deliveryDetail, '', shippingFee]);
-  await appendRow('CustomerDetails', [orderNo, userId, name, phone, deliveryDetail, new Date().toISOString()]);
+  const createdAt = new Date().toISOString();
+  await appendRow('Orders', [orderNo, userId, JSON.stringify(products), total, shipping, payment, 'Pending', createdAt, '', productSummary, name, phone, deliveryDetail, '', shippingFee]);
+  await appendRow('CustomerDetails', [orderNo, userId, name, phone, deliveryDetail, createdAt]);
+  await recordReferralSale({ orderNo, userId, total, createdAt });
   await clearCart(userId); clearCheckout(userId);
   return { orderNo, subtotal: cart.subtotal, shippingFee, total };
 }

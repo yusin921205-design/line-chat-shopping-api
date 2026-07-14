@@ -5,7 +5,13 @@ const HEADERS = {
   Cart: ['UserId｜LINE使用者ID', 'ProductId｜商品編號', 'Quantity｜商品數量'],
   Orders: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'Products(JSON)｜商品明細JSON', 'Total｜訂單總額', 'Shipping｜取貨方式', 'Payment｜付款方式', 'Status｜訂單狀態', 'CreatedAt｜訂購日期時間', 'ShippedAt｜出貨日期', 'ProductSummary｜訂購商品與數量', 'CustomerName｜客戶姓名', 'CustomerPhone｜客戶電話', 'DeliveryDetail｜取貨門市或收件資訊', 'TransferLast5｜匯款末五碼', 'ShippingFee｜運費'],
   PaymentReports: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'TransferLast5｜匯款末五碼', 'Status｜核帳狀態', 'ReportedAt｜回報日期時間', 'ScreenshotUrl｜匯款截圖連結'],
-  CustomerDetails: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'Name｜客戶姓名', 'Phone｜客戶電話', 'DeliveryDetail｜取貨門市或收件資訊', 'CreatedAt｜建立日期時間']
+  CustomerDetails: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'Name｜客戶姓名', 'Phone｜客戶電話', 'DeliveryDetail｜取貨門市或收件資訊', 'CreatedAt｜建立日期時間'],
+  ReferralSources: ['Keyword｜推廣關鍵字', 'SourceName｜歸屬人或來源', 'SourceType｜來源類型', 'Active｜啟用(Y/N)'],
+  CustomerReferrals: ['UserId｜LINE使用者ID', 'DisplayName｜LINE顯示名稱', 'SourceKeyword｜推廣關鍵字', 'SourceName｜歸屬人或來源', 'SourceType｜來源類型', 'Status｜歸屬狀態', 'FollowedAt｜加入好友時間', 'AttributedAt｜歸屬時間', 'Note｜備註'],
+  ReferralAlerts: ['UserId｜LINE使用者ID', 'DisplayName｜LINE顯示名稱', 'FollowedAt｜加入好友時間', 'Status｜警示狀態', 'Note｜備註'],
+  ReferralSales: ['OrderNo｜訂單編號', 'UserId｜LINE使用者ID', 'SourceName｜歸屬人或來源', 'SourceKeyword｜推廣關鍵字', 'Month｜月份', 'Revenue｜訂單業績', 'CreatedAt｜訂購時間'],
+  ReferralMonthlySummary: ['Month｜月份', 'SourceName｜歸屬人或來源', 'OrderCount｜訂單數', 'Revenue｜業績'],
+  ReferralDashboard: ['推廣業績儀表板']
 };
 
 // Sheet structure does not change for every LINE message.  Avoid spending six
@@ -40,6 +46,22 @@ async function ensureSheetsNow() {
       await api.spreadsheets.values.update({ spreadsheetId: id, range: `${title}!A1`, valueInputOption: 'RAW', requestBody: { values: [headers] } });
     }
   }
+  if (missing.includes('ReferralDashboard')) await initializeReferralDashboard(api, id);
+}
+
+async function initializeReferralDashboard(api, id) {
+  await api.spreadsheets.values.update({
+    spreadsheetId: id,
+    range: 'ReferralDashboard!A1',
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { values: [
+      ['推廣業績儀表板'],
+      ['查看月份', '=TEXT(TODAY(),"yyyy-mm")'],
+      [],
+      ['來源', '訂單數', '業績', '業績占比'],
+      ['=IFERROR(QUERY(ReferralMonthlySummary!A2:D,"select B,sum(C),sum(D) where A = \'"&B2&"\' group by B label B \'來源\',sum(C) \'訂單數\',sum(D) \'業績\'",0),"")', '', '', '=ARRAYFORMULA(IFERROR(C5:C/SUM(C5:C),))']
+    ] }
+  });
 }
 
 export async function readRows(sheetName) {

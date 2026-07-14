@@ -8,6 +8,7 @@ import { beginCustomerDetails, clearCheckout, clearPendingTransferScreenshot, ge
 import { attachTransferScreenshot, submitTransferReport } from '../services/paymentReportService.js';
 import { saveTransferScreenshot } from '../services/transferScreenshotService.js';
 import { getShippingOption } from '../services/pricingService.js';
+import { registerNewFollower, tryAttributeReferral } from '../services/referralService.js';
 import { cartMessage, editMessage, paymentMessage, productList, shippingMessage } from '../flex/messages.js';
 
 const paymentLabels = { transfer: '銀行轉帳' };
@@ -57,6 +58,10 @@ async function handleEvent(event) {
   try {
     const userId = event.source.userId;
     await ensureSheets();
+    if (event.type === 'follow') {
+      await registerNewFollower(userId);
+      return reply(event, { type: 'text', text: '歡迎加入！若您是親友、社區或合作夥伴推薦，請直接輸入對方提供的推廣關鍵字；若沒有也可以直接開始選購。' });
+    }
     if (event.type === 'message' && event.message.type === 'image') {
       const checkout = getCheckout(userId);
       if (!checkout.transferScreenshotOrderNo) return reply(event, { type: 'text', text: '請先依訂單指示回覆匯款末五碼，再上傳匯款截圖。' });
@@ -73,6 +78,11 @@ async function handleEvent(event) {
         await submitTransferReport(userId, orderNo.toUpperCase(), last5);
         setPendingTransferScreenshot(userId, orderNo.toUpperCase());
         return reply(event, { type: 'text', text: '已收到您的匯款末五碼資料。請再上傳一張匯款截圖，完成後我們會盡快核對款項。' });
+      }
+      const referral = await tryAttributeReferral(userId, event.message.text);
+      if (referral) {
+        const message = referral.alreadyAttributed ? `您的來源已登記為「${referral.sourceName}」，謝謝您！` : `已完成來源登記：${referral.sourceName}。謝謝您的支持！`;
+        return reply(event, { type: 'text', text: message });
       }
       const checkout = getCheckout(userId);
       if (checkout.step === 'customerDetails') {
