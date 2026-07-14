@@ -33,7 +33,7 @@ export async function tryAttributeReferral(userId, input) {
 
   const referrals = await readRows('CustomerReferrals');
   const referral = referrals.find((row) => row.UserId === userId);
-  if (referral && ['已歸屬', '人工歸屬'].includes(referral.Status)) return { alreadyAttributed: true, sourceName: referral.SourceName };
+  if (referral && ['已歸屬', '人工歸屬'].includes(referral.Status)) return { alreadyAttributed: true, displayKeyword: referral.SourceKeyword || referral.SourceName };
 
   const followedAt = referral?.FollowedAt || new Date().toISOString();
   const row = [userId, referral?.DisplayName || '', source.Keyword, source.SourceName || source.Keyword, source.SourceType || '推廣關鍵字', '已歸屬', followedAt, new Date().toISOString(), '關鍵字自動歸屬'];
@@ -43,7 +43,7 @@ export async function tryAttributeReferral(userId, input) {
   const alerts = await readRows('ReferralAlerts');
   const alert = alerts.filter((item) => item.UserId === userId && item.Status !== '已處理').at(-1);
   if (alert) await updateRow('ReferralAlerts', alert._row, [userId, alert.DisplayName || '', alert.FollowedAt, '已處理', `已自動歸屬：${source.SourceName || source.Keyword}`]);
-  return { sourceName: source.SourceName || source.Keyword };
+  return { displayKeyword: source.Keyword };
 }
 
 export async function recordReferralSale({ orderNo, userId, total, createdAt }) {

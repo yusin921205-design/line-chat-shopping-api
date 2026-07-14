@@ -81,7 +81,7 @@ async function handleEvent(event) {
       }
       const referral = await tryAttributeReferral(userId, event.message.text);
       if (referral) {
-        const message = referral.alreadyAttributed ? `您的來源已登記為「${referral.sourceName}」，謝謝您！` : `已完成來源登記：${referral.sourceName}。謝謝您的支持！`;
+        const message = referral.alreadyAttributed ? `您的來源關鍵字已登記為「${referral.displayKeyword}」，謝謝您！` : `已完成來源登記：${referral.displayKeyword}。謝謝您的支持！`;
         return reply(event, { type: 'text', text: message });
       }
       const checkout = getCheckout(userId);
