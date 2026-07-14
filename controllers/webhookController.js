@@ -11,6 +11,8 @@ import { getShippingOption } from '../services/pricingService.js';
 import { registerNewFollower, tryAttributeReferral } from '../services/referralService.js';
 import { cartMessage, editMessage, paymentMessage, productList, shippingMessage } from '../flex/messages.js';
 
+const welcomeMessage = { type: 'text', text: '歡迎加入！若您是親友、社區或合作夥伴推薦，請直接輸入對方提供的推廣關鍵字；若沒有也可以直接開始選購。' };
+
 const paymentLabels = { transfer: '銀行轉帳' };
 const deliveryPrompts = {
   seven: '請輸入 7-ELEVEN 取貨門市名稱與縣市。',
@@ -60,7 +62,7 @@ async function handleEvent(event) {
     await ensureSheets();
     if (event.type === 'follow') {
       await registerNewFollower(userId);
-      return reply(event, { type: 'text', text: '歡迎加入！若您是親友、社區或合作夥伴推薦，請直接輸入對方提供的推廣關鍵字；若沒有也可以直接開始選購。' });
+      return reply(event, welcomeMessage);
     }
     if (event.type === 'message' && event.message.type === 'image') {
       const checkout = getCheckout(userId);
@@ -72,6 +74,10 @@ async function handleEvent(event) {
     }
     if (event.type === 'message' && event.message.type === 'text') {
       const text = event.message.text.trim().toLowerCase();
+      if (text === '/重啟') {
+        clearCheckout(userId);
+        return reply(event, welcomeMessage);
+      }
       const transferReport = text.match(/^匯款\s+(l\d{8}-[a-z0-9]+)\s+(\d{5})$/i);
       if (transferReport) {
         const [, orderNo, last5] = transferReport;
